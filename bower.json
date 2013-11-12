@@ -1,0 +1,34 @@
+{
+  "dependencies": {
+    "angular": "~1.0.8",
+    "bootstrap": "~3.0.2"
+  },
+  "name": "Browser Storage Abuser",
+  "version": "0.1.0",
+  "main": "js/app.js",
+  "authors": [
+    "Eiji Kitamura <agektmr+github@gmail.com>"
+  ],
+  "description": "Experiment with browser storages by abusing them",
+  "license": "Apache2.0",
+  "homepage": "http://google.com/+agektmr",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "exportsOverride": {
+    "angular": {
+      "js": "*.js"
+    },
+    "bootstrap": {
+      "css": "dist/css/*.css",
+      "js": "js/modal.js"
+    },
+    "jquery": {
+      "js": "*.js"
+    }
+  }
+}

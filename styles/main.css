@@ -1,0 +1,66 @@
+/* Will be compiled down to a single stylesheet with your sass files */
+.quota meter {
+  width: 230px; }
+.quota input[type="number"] {
+  width: 50px; }
+
+.panel {
+  position: relative; }
+  .panel.hover {
+    background-color: #ccc; }
+  .panel.loading:before {
+    z-index: 1000;
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0.5;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #999;
+    content: '';
+    background-image: url(../img/loading.gif); }
+  .panel.unsupported:before {
+    z-index: 1000;
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0.5;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: #999;
+    color: #fff;
+    content: 'Not supported on this browser';
+    font-size: 2.0em;
+    text-align: center;
+    background-color: #666;
+    line-height: 100px; }
+  .panel .table {
+    max-height: 300px;
+    overflow-y: auto; }
+  .panel .info {
+    margin-bottom: 15px; }
+
+.left {
+  text-align: left; }
+
+.right {
+  text-align: right; }
+
+input[type="file"] {
+  visibility: hidden;
+  width: 0;
+  height: 0; }
+
+table tr * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; }
+
+#progress progress {
+  width: 100%; }
