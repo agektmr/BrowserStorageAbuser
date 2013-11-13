@@ -130,7 +130,7 @@
         <div class="navbar-header">
           <span class="navbar-brand">Browser Storage Abuser</span>
         </div>
-        <div class="navbar-header navbar-right">
+        <div class="navbar-form navbar-right">
           <button class="btn btn-primary" ng-click="request_usage()">Reload</button>
         </div>
       </div>
@@ -152,7 +152,7 @@
         <div class="panel-heading row">
           <h2 class="panel-title col-sm-12">Quota:</h2>
         </div>
-        <div class="panel-body form-horizontal">
+        <div class="panel-body form-horizontal" ng-cloak>
           <div class="info row">
             <div class="col-sm-6">
               <select class="form-control" ng-model="source.storage_type" ng-change="change_file_system()" ng-hide="!source.supported">

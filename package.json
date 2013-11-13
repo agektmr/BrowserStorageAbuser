@@ -1,5 +1,5 @@
 {
-  "name": "Browser Storage Abuser",
+  "name": "BrowserStorageAbuser",
   "version": "0.1.0",
   "description": "Experiment with browser storages by abusing them",
   "main": "Gruntfile.js",
