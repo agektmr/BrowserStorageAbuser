@@ -60,6 +60,13 @@ input[type="file"] {
   width: 0;
   height: 0;
 }
+details {
+  margin-bottom: 18px;
+  cursor: pointer;
+  summary:focus {
+    outline: none;
+  }
+}
 table {
   tr {
     * {

@@ -21,6 +21,13 @@
           </div>
         </div>
         <div class="panel-body">
+          <details>
+            <summary>What is {{data.name}}?</summary>
+            <ul>
+              <li>{{data.desc}}</li>
+              <li><a ng-href="{{data.link}}" target="_blank">Read more</a></li>
+            </ul>
+          </details>
           <div class="info right">
             <div class="btn-group btn-group right">
               <input type="file" multiple>
@@ -29,13 +36,6 @@
               <button class="btn btn-danger" ng-click="delete_all()">Delete All</button>
             </div>
           </div>
-          <details>
-            <summary>What is {{data.name}}?</summary>
-            <ul>
-              <li>{{data.desc}}</li>
-              <li><a ng-href="{{data.link}}" target="_blank">Read more</a></li>
-            </ul>
-          </details>
           <div class="table">
             <table class="table table-condensed" style="background-color:inherit;" ng-show="source.total>0">
               <thead>
@@ -131,7 +131,7 @@
           <span class="navbar-brand">Browser Storage Abuser</span>
         </div>
         <div class="navbar-form navbar-right">
-          <button class="btn btn-primary" ng-click="request_usage()">Reload</button>
+          <button class="btn btn-primary" ng-click="update()">Reload</button>
         </div>
       </div>
     </header>
@@ -150,28 +150,30 @@
       </div>
       <div class="panel panel-default" ng-class="{unsupported: !source.supported}" quota-table>
         <div class="panel-heading row">
-          <h2 class="panel-title col-sm-12">Quota:</h2>
+          <h2 class="panel-title col-sm-12">Quota</h2>
         </div>
         <div class="panel-body form-horizontal" ng-cloak>
-          <div class="info row">
-            <div class="col-sm-6">
-              <select class="form-control" ng-model="source.storage_type" ng-change="change_file_system()" ng-hide="!source.supported">
-                <option value="TEMPORARY">Temporary</option>
-                <option value="PERSISTENT">Persistent</option>
-              </select>
-            </div>
-            <div class="col-sm-6">
-              <meter value="{{source.usage}}" max="{{source.quota}}"></meter>
-              <span class="size" title="{{source.usage}}bytes">{{source.usage|size}}</span> / <span ng-hide="source.storage_type=='PERSISTENT'">{{source.quota|size}}</span><span ng-hide="source.storage_type!='PERSISTENT'"><input type="number" ng-model="source.disp_quota">MB</span>
-              <button class="btn btn-xs btn-warning" ng-click="request_quota()" ng-hide="source.storage_type!='PERSISTENT'">Request Quota</button>
-            </div>
-          </div>
           <details>
             <summary>What is Quota Management API?</summary>
             <ul>
               <li>Quota Management API is...</li>
             </ul>
           </details>
+          <div class="form-group info row">
+            <div class="col-sm-6">
+              <select class="form-control" ng-model="source.storage_type" ng-change="change_file_system()" ng-hide="!source.supported">
+                <option value="TEMPORARY">Temporary</option>
+                <option value="PERSISTENT">Persistent</option>
+              </select>
+            </div>
+            <div class="col-sm-6 form-inline">
+              <div class="progress">
+                <div class="progress-bar progress-bar-info" ng-style="{width:source.usage/source.quota*100+'%'}"></div>
+              </div>
+              <span class="size" title="{{source.usage}}bytes">{{source.usage|size}}</span> / <span ng-hide="source.storage_type=='PERSISTENT'">{{source.quota|size}}</span><span ng-hide="source.storage_type!='PERSISTENT'"><input type="number" ng-model="source.disp_quota">MB</span>
+              <button class="btn btn-xs btn-warning" ng-click="request_quota()" ng-hide="source.storage_type!='PERSISTENT'">Request Quota</button>
+            </div>
+          </div>
         </div>
       </div>
       <storage-table ng-repeat="data in storages"></storage-table>

@@ -47,7 +47,7 @@ app.controller('MainCtrl', function($scope, $timeout, storages) {
     }
   };
 
-  $scope.request_usage = function() {
+  $scope.update = function() {
     $scope.$broadcast('update');
   };
 
@@ -60,24 +60,21 @@ app.controller('MainCtrl', function($scope, $timeout, storages) {
   };
 });
 
-app.directive('quotaTable', ['storages', 'Quota', function(storages, quota) {
+app.directive('quotaTable', ['Quota', function(quota) {
   return {
     restrict: 'A',
     controller: function($scope, Quota) {
       $scope.source = Quota;
       $scope.change_file_system = function() {
         $scope.source && $scope.source.change_file_system(function() {
-          $scope.request_usage();
+          $scope.update();
         });
       };
-      /*
-        * how many times do I have to call this? only once?
-        * will this work forever without asking more?
-        * what happens if I change the requested size?
-        * what if there's not enough storage available?
-       */
+
       $scope.request_quota = function() {
-        $scope.source && $scope.source.request_quota();
+        $scope.source.request_quota(function() {
+          $scope.update();
+        });
       };
     },
     link: function(scope, elem, attr) {

@@ -57,6 +57,12 @@ input[type="file"] {
   width: 0;
   height: 0; }
 
+details {
+  margin-bottom: 18px;
+  cursor: pointer; }
+  details summary:focus {
+    outline: none; }
+
 table tr * {
   white-space: nowrap;
   overflow: hidden;
