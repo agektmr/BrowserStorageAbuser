@@ -13,11 +13,11 @@
     <link rel="stylesheet" href="lib/css/bootstrap/bootstrap-theme.min.css"/>
     <link rel="stylesheet" href="styles/main.css"/>
     <script type="text/ng-template" id="storage-table.html">
-      <div class="panel panel-default" ng-class="{hover:hover, loading:data.source.loading, unsupported:!data.source.supported}">
+      <div class="panel panel-default" ng-class="{hover:hover, loading:source.loading, unsupported:!source.supported}">
         <div class="panel-heading row">
-          <h2 class="panel-title col-sm-6 left">{{name}}</h2>
+          <h2 class="panel-title col-sm-6 left">{{data.name}}</h2>
           <div class="col-sm-6 right">
-            <span class="size" ng-class="{filled:data.source.filled}" title="{{data.source.total}}bytes">Items: {{data.source.table.length}}, Total: {{data.source.total|size}}</span>
+            <span class="size" ng-class="{filled:source.filled}" title="{{source.total}}bytes">Items: {{source.table.length}}, Total: {{source.total|size}}</span>
           </div>
         </div>
         <div class="panel-body">
@@ -30,14 +30,14 @@
             </div>
           </div>
           <details>
-            <summary>What is {{name}}?</summary>
+            <summary>What is {{data.name}}?</summary>
             <ul>
               <li>{{data.desc}}</li>
               <li><a ng-href="{{data.link}}" target="_blank">Read more</a></li>
             </ul>
           </details>
           <div class="table">
-            <table class="table table-condensed" style="background-color:inherit;" ng-show="data.source.total>0">
+            <table class="table table-condensed" style="background-color:inherit;" ng-show="source.total>0">
               <thead>
                 <tr class="row">
                   <th class="col-sm-8">Name</th>
@@ -46,7 +46,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr ng-repeat="item in data.source.table" class="row">
+                <tr ng-repeat="item in source.table" class="row">
                   <td class="col-sm-8">{{item.name}}</td>
                   <td class="col-sm-2" title="{{item.size}}bytes">{{item.size|size}}</td>
                   <td class="col-sm-2">{{item.date|date:'yyyy/MM/dd HH:mm:ss'}}</td>
@@ -114,7 +114,7 @@
       </div>
     </script>
   </head>
-  <body>
+  <body ng-controller="MainCtrl">
 
     <!--[if lt IE 7]>
       <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
@@ -125,18 +125,22 @@
       <script src="scripts/vendor/json3.min.js"></script>
     <![endif]-->
 
-    <header class="navbar navbar-inverse">
+    <header class="navbar navbar-inverse navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
-            <span class="navbar-brand">Browser Storage Abuser</span>
+          <span class="navbar-brand">Browser Storage Abuser</span>
+        </div>
+        <div class="navbar-header navbar-right">
+          <button class="btn btn-primary" ng-click="request_usage()">Reload</button>
         </div>
       </div>
     </header>
 
     <!-- Add your site or application content here -->
-    <div class="container quota" ng-controller="MainCtrl">
+    <div class="container quota">
       <div class="page-header">
-        <h1 class="hidden-xs">Browser Storage Abuser</h1>
+        <br>
+        <br>
         <p>Have you ever wondered how much storage you can use on browsers? This tool is for you to abuse and experiment with limit of your favorite storage!</p>
         <ul>
           <li>Drag and drop files and folders onto your favorite storage.</li>
@@ -144,23 +148,22 @@
           <li>&quot;Fill Storage&quot; with blobs with arbitrary size.</li>
         </ul>
       </div>
-      <div class="panel panel-default">
+      <div class="panel panel-default" ng-class="{unsupported: !source.supported}" quota-table>
         <div class="panel-heading row">
           <h2 class="panel-title col-sm-12">Quota:</h2>
         </div>
         <div class="panel-body form-horizontal">
           <div class="info row">
             <div class="col-sm-6">
-              <select class="form-control" ng-model="storage_type" ng-change="open_file_system()" ng-hide="!quota_supported">
+              <select class="form-control" ng-model="source.storage_type" ng-change="change_file_system()" ng-hide="!source.supported">
                 <option value="TEMPORARY">Temporary</option>
                 <option value="PERSISTENT">Persistent</option>
               </select>
             </div>
             <div class="col-sm-6">
-              <button class="btn btn-primary" ng-click="request_usage()">Update</button>
-              <meter value="{{usage}}" max="{{quota}}"></meter>
-              <span class="size" title="{{usage}}bytes">{{usage|size}}</span> / <span ng-hide="storage_type=='PERSISTENT'">{{quota|size}}</span><span ng-hide="storage_type!='PERSISTENT'"><input type="number" ng-model="disp_quota">MB</span>
-              <input type="button" class="btn btn-xs btn-warning" ng-click="request_quota()" value="Request Quota" ng-hide="storage_type!='PERSISTENT'">
+              <meter value="{{source.usage}}" max="{{source.quota}}"></meter>
+              <span class="size" title="{{source.usage}}bytes">{{source.usage|size}}</span> / <span ng-hide="source.storage_type=='PERSISTENT'">{{source.quota|size}}</span><span ng-hide="source.storage_type!='PERSISTENT'"><input type="number" ng-model="source.disp_quota">MB</span>
+              <button class="btn btn-xs btn-warning" ng-click="request_quota()" ng-hide="source.storage_type!='PERSISTENT'">Request Quota</button>
             </div>
           </div>
           <details>
@@ -171,7 +174,7 @@
           </details>
         </div>
       </div>
-      <storage-table ng-repeat="(name, data) in storages"></storage-table>
+      <storage-table ng-repeat="data in storages"></storage-table>
       <fill-storage></fill-storage>
       <storage-progress></storage-progress>
       <footer>
@@ -185,13 +188,13 @@
     <script src="lib/js/bootstrap/modal.js"></script>
 
     <!-- build:js scripts/scripts.js -->
-    <script src="js/quota.js"></script>
+    <script src="js/app.js"></script>
     <script src="js/fs.js"></script>
-    <script src="js/ls.js"></script>
-    <script src="js/ss.js"></script>
+    <script src="js/quota.js"></script>
     <script src="js/idb.js"></script>
     <script src="js/sql.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/ws.js"></script>
+    <script src="js/main.js"></script>
     <!-- endbuild -->
 
     <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->

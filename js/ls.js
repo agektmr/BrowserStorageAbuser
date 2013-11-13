@@ -17,8 +17,8 @@ Author: Eiji Kitamura (agektmr@gmail.com)
 */
 'use strict';
 
-var ls = (function() {
-  var that;
+
+app.factory('LocalStorage', ['$window', function($window) {
   var error = function(e) {
     alert(e.message);
     if (console) {
@@ -32,15 +32,15 @@ var ls = (function() {
   var add = function() {
     var parse = function(file) {
       var reader = new FileReader();
-      reader.onload = function readerOnLoad(e) {
+      reader.onload = (function readerOnLoad(e) {
         var data = {
           name:     file.name,
           size:     file.size,
           date:     file.lastModifiedDate.getTime(),
           payload:  e.target.result
         };
-        save(data);
-      };
+        save.bind(this)(data);
+      }).bind(this);
 
       if (file.type === 'text/plain') {
         reader.readAsText(file);
@@ -54,51 +54,45 @@ var ls = (function() {
         storage.setItem(data.name, JSON.stringify(data));
       } catch(e) {
         if (e.code === e.QUOTA_EXCEEDED_ERR || e.code === 1014) { // 1014 is unknown error code Firefox emits
-          that.filled = true;
+          this.filled = true;
         }
-        that.queue = [];
+        this.queue = [];
         error(e);
       } finally {
-        if (that.queue.length > 0) {
-          if (typeof that.onprogress === 'function') that.onprogress(++that.value, that.max);
-          add();
+        if (this.queue.length > 0) {
+          if (typeof this.onprogress === 'function') this.onprogress(++this.value, this.max);
+          add.bind(this)();
         } else {
-          that.loading = false;
-          that.getAll();
-          if (that.scope) {
-            if (typeof that.oncomplete === 'function') that.oncomplete();
-            that.scope.$apply();
-          }
+          this.loading = false;
+          if (typeof this.oncomplete === 'function') this.oncomplete();
         }
       }
     };
 
-    var entry = that.queue.shift();
+    var entry = this.queue.shift();
     switch (entry.toString().replace(/\[object (.*?)\]/, '$1')) {
       case 'Blob':
         // Support for drag & drop with folders
-        parse(entry);
+        parse.bind(this)(entry);
         break;
 
       case 'File':
       case 'FileEntry':
         // Support for input[type=file]
-        entry.file(parse);
+        entry.file(parse.bind(this));
         break;
 
       default:
         // Special case to support IE9 which has LocalStorage support but Blob support
-        save(entry);
+        save.bind(this)(entry);
         break;
     }
   };
 
   var ls = function() {
-    that = this;
     this.supported  = false;
     this.filled     = false;
     this.loading    = false;
-    this.scope      = null;
     this.oncomplete = null;
     this.onprogress = null;
     this.queue = [];
@@ -106,10 +100,9 @@ var ls = (function() {
     this.max   = 0;
     this.table = [];
     this.total = 0;
-    if (localStorage) {
+    if ($window.localStorage) {
       this.supported = true;
-      storage = localStorage;
-      setTimeout(this.getAll.bind(this), 1000);
+      storage = $window.localStorage;
     } else {
       throw 'LocalStorage not supported on this browser';
     }
@@ -127,7 +120,7 @@ var ls = (function() {
       }
     },
     getAll: function() {
-      if (!storage || this.loading) return;
+      if (!this.supported || this.loading) return;
       var table = [];
       var size = 0;
       this.loading = true;
@@ -155,17 +148,14 @@ var ls = (function() {
         table.push(data);
       }
       setTimeout((function getAllSetTimeout() {
-        if (this.scope) {
-          this.table = table;
-          this.total = size;
-          this.loading = false;
-          if (typeof this.oncomplete === 'function') this.oncomplete();
-          this.scope.$apply();
-        }
+        this.table = table;
+        this.total = size;
+        this.loading = false;
+        if (typeof this.oncomplete === 'function') this.oncomplete();
       }).bind(this), 0);
     },
     deleteAll: function() {
-      if (!storage || this.loading) return;
+      if (!this.supported || this.loading) return;
       this.table = [];
       this.loading = true;
       this.filled = false;
@@ -178,9 +168,8 @@ var ls = (function() {
         }
       }
       this.loading = false;
-      this.getAll();
       if (typeof this.oncomplete === 'function') this.oncomplete();
     }
   };
   return new ls();
-})();
+}]);

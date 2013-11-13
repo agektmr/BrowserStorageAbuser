@@ -17,7 +17,7 @@ Author: Eiji Kitamura (agektmr@gmail.com)
 */
 'use strict';
 
-var sql = (function(quota) {
+app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
   var error = function(e) {
     if (e.code === e.QUOTA_ERR) {
       this.filled = true;
@@ -30,13 +30,7 @@ var sql = (function(quota) {
 
     this.queue = [];
     this.loading = false;
-    if (e.code === e.QUOTA_ERR) {
-      this.getAll();
-    }
-    if (this.scope) {
-      if (typeof this.oncomplete === 'function') this.oncomplete();
-      this.scope.$apply();
-    }
+    this.getAll();
   };
 
   var version = '1.0',
@@ -61,10 +55,6 @@ var sql = (function(quota) {
             } else {
               this.loading = false;
               this.getAll();
-              if (this.scope) {
-                if (typeof this.oncomplete === 'function') this.oncomplete();
-                this.scope.$apply();
-              }
             }
           }).bind(this), (function(t, e) {
             error.bind(this)(e);
@@ -88,15 +78,10 @@ var sql = (function(quota) {
     }
   };
 
-  var sql = function(quota) {
+  var sql = function() {
     this.supported = false;
-    if (!window.openDatabase) {
-      throw 'WebSQL database not supported on this browser';
-    }
-    this.supported  = true;
     this.filled     = false;
     this.loading    = false;
-    this.scope      = null;
     this.oncomplete = null;
     this.onprogress = null;
     this.queue = [];
@@ -104,7 +89,13 @@ var sql = (function(quota) {
     this.max   = 0;
     this.table = [];
     this.total = 0;
-    db = openDatabase('QuotaManagement', '', 'QuotaManagement', quota && quota.quota || 1 * 1024 * 1024);
+    if (!$window.openDatabase) {
+      console.error('WebSQL database not supported on this browser');
+      return;
+    }
+    this.supported  = true;
+
+    db = openDatabase('BrowserStorageAbuser', '', 'BrowserStorageAbuser', quota && quota.quota || 1 * 1024 * 1024);
     if (db.version !== version) {
       db.changeVersion(db.version, version, (function changeVersionOnCallback(transaction) {
         // transaction.executeSql('DROP TABLE entries');
@@ -115,6 +106,7 @@ var sql = (function(quota) {
           'date        INTEGER, '+
           'payload     TEXT)', [],
         (function executeSqlOnCallback(t) {
+          this.getAll();
           console.info('Created new table on WebSQL');
         }).bind(this),
         (function executeSqlOnError(t, e) {
@@ -126,15 +118,17 @@ var sql = (function(quota) {
         throw 'WebSQL Error!';
 
       }).bind(this), (function changeVersionOnSuccess() {
+        this.getAll();
         console.info('upgraded WebSQL');
 
       }).bind(this));
+    } else {
+      this.getAll();
     }
-    this.getAll();
   };
   sql.prototype = {
     add: function(entry) {
-      if (!db) return;
+      if (!this.supported) return;
       this.queue.push(entry);
       this.max = this.queue.length;
       if (this.loading === false) {
@@ -145,7 +139,7 @@ var sql = (function(quota) {
       }
     },
     getAll: function() {
-      if (!db || this.loading) return;
+      if (!this.supported || this.loading) return;
       var size = 0;
       this.loading = true;
       db.readTransaction((function readTransactionOnCallback(transaction) {
@@ -164,10 +158,7 @@ var sql = (function(quota) {
           this.table = table;
           this.total = size;
           this.loading = false;
-          if (this.scope) {
-            if (typeof this.oncomplete === 'function') this.oncomplete();
-            this.scope.$apply();
-          }
+          if (typeof this.oncomplete === 'function') this.oncomplete();
         }).bind(this),
         (function executeSqlOnError(t, e) {
           // SQLError
@@ -177,7 +168,7 @@ var sql = (function(quota) {
       error.bind(this));
     },
     deleteAll: function() {
-      if (!db || this.loading) return;
+      if (!this.supported || this.loading) return;
       this.table = [];
       this.loading = true;
       db.transaction((function transactionOnCallback(transaction) {
@@ -186,10 +177,6 @@ var sql = (function(quota) {
           this.filled = false;
           this.loading = false;
           this.getAll();
-          if (this.scope) {
-            if (typeof this.oncomplete === 'function') this.oncomplete();
-            this.scope.$apply();
-          }
         }).bind(this),
         (function executeSqlOnError(t, e) {
           error.bind(this)(e);
@@ -198,5 +185,5 @@ var sql = (function(quota) {
       error.bind(this));
     }
   };
-  return new sql(quota);
-})(Quota);
+  return new sql();
+}]);

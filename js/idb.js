@@ -17,7 +17,7 @@ Author: Eiji Kitamura (agektmr@gmail.com)
 */
 'use strict';
 
-var idb = (function() {
+app.factory('IndexedDB', ['$window', function($window) {
   var error = function(e) {
     if (e.code && e.code === e.QUOTA_EXCEEDED_ERR) {
       this.filled = true;
@@ -31,7 +31,6 @@ var idb = (function() {
     this.queue = [];
     this.loading = false;
     this.getAll();
-    if (typeof this.oncomplete === 'function') this.oncomplete();
   };
 
   var version = 3,
@@ -55,10 +54,6 @@ var idb = (function() {
           } else {
             this.loading = false;
             this.getAll();
-            if (this.scope) {
-              if (typeof this.oncomplete === 'function') this.oncomplete();
-              this.scope.$apply();
-            }
           }
         }).bind(this);
         transaction.onerror = error.bind(this);
@@ -92,12 +87,8 @@ var idb = (function() {
 
   var idb = function() {
     this.supported  = false;
-    if (!window.indexedDB) {
-      throw 'Indexed Database API not supported on this browser';
-    }
     this.filled     = false;
     this.loading    = false;
-    this.scope      = null;
     this.oncomplete = null;
     this.onprogress = null;
     this.queue = [];
@@ -105,12 +96,16 @@ var idb = (function() {
     this.max   = 0;
     this.table = [];
     this.total = 0;
+    if (!$window.indexedDB) {
+      console.error('Indexed Database API not supported on this browser');
+      return;
+    }
 
-    var req = indexedDB.open('QuotaManagement', version);
+    var req = $window.indexedDB.open('BrowserStorageAbuser', version);
     req.onsuccess = (function(e) {
       db = e.target.result;
-      this.supported = true;
-      this.getAll(); // Initial load come here since this comes after opening database
+      this.supported  = true;
+      this.getAll();
     }).bind(this);
     req.onerror = error.bind(this);
     req.onupgradeneeded = (function requestOnUpgradeNeeded(e) {
@@ -124,7 +119,7 @@ var idb = (function() {
   };
   idb.prototype = {
     add: function(entry) {
-      if (!db) return;
+      if (!this.supported) return;
       this.queue.push(entry);
       this.max = this.queue.length;
       if (this.loading === false) {
@@ -135,7 +130,7 @@ var idb = (function() {
       }
     },
     getAll: function() {
-      if (!db || this.loading) return;
+      if (!this.supported || this.loading) return;
       var table = [];
       var size = 0;
       this.loading = true;
@@ -145,10 +140,7 @@ var idb = (function() {
         this.table = table;
         this.total = size;
         this.loading = false;
-        if (this.scope) {
-          if (typeof this.oncomplete === 'function') this.oncomplete();
-          this.scope.$apply();
-        }
+        if (typeof this.oncomplete === 'function') this.oncomplete();
       }).bind(this);
       transaction.onerror = error.bind(this);
 
@@ -167,7 +159,7 @@ var idb = (function() {
       req.onerror = error.bind(this);
     },
     deleteAll: function() {
-      if (!db || this.loading) return;
+      if (!this.supported || this.loading) return;
       this.table = [];
       this.loading = true;
 
@@ -176,10 +168,6 @@ var idb = (function() {
         this.filled = false;
         this.loading = false;
         this.getAll();
-        if (this.scope) {
-          if (typeof this.oncomplete === 'function') this.oncomplete();
-          this.scope.$apply();
-        }
       }).bind(this);
       transaction.onerror = error.bind(this);
 
@@ -196,4 +184,4 @@ var idb = (function() {
     }
   };
   return new idb();
-})();
+}]);

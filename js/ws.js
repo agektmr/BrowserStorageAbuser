@@ -17,11 +17,13 @@ Author: Eiji Kitamura (agektmr@gmail.com)
 */
 'use strict';
 
-app.factory('SessionStorage', ['$window', function($window) {
+
+var WebStorage = function(storage_name) {
+  var storage_name_ = storage_name.charAt(0).toLowerCase()+storage_name.substr(1);
   var error = function(e) {
     alert(e.message);
     if (console) {
-      console.error('SessionStorage Error!', e);
+      console.error(storage_name+' Error!', e);
       console.trace && console.trace();
     }
   };
@@ -63,7 +65,7 @@ app.factory('SessionStorage', ['$window', function($window) {
           add.bind(this)();
         } else {
           this.loading = false;
-          if (typeof this.oncomplete === 'function') this.oncomplete();
+          this.getAll();
         }
       }
     };
@@ -82,13 +84,13 @@ app.factory('SessionStorage', ['$window', function($window) {
         break;
 
       default:
-        // Special case to support IE9 which has SessionStorage support but Blob support
+        // Special case to support IE9 which has WebStorage support but Blob support
         save.bind(this)(entry);
         break;
     }
   };
 
-  var ss = function() {
+  var ws = function() {
     this.supported  = false;
     this.filled     = false;
     this.loading    = false;
@@ -99,16 +101,19 @@ app.factory('SessionStorage', ['$window', function($window) {
     this.max   = 0;
     this.table = [];
     this.total = 0;
-    if ($window.sessionStorage) {
+
+    if (window[storage_name_]) {
       this.supported = true;
-      storage = $window.sessionStorage;
+      storage = window[storage_name_];
+      this.getAll();
     } else {
-      throw 'SessionStorage not supported on this browser';
+      console.error(storage_name+' not supported on this browser');
+      return;
     }
   };
-  ss.prototype = {
+  ws.prototype = {
     add: function(fileEntry) {
-      if (!this.supported) return;
+      if (!storage) return;
       this.queue.push(fileEntry);
       this.max = this.queue.length;
       if (this.loading === false) {
@@ -167,8 +172,12 @@ app.factory('SessionStorage', ['$window', function($window) {
         }
       }
       this.loading = false;
-      if (typeof this.oncomplete === 'function') this.oncomplete();
+      this.getAll();
     }
   };
-  return new ss();
-}]);
+  return function() {
+    return new ws();
+  }
+}
+app.factory('LocalStorage', WebStorage('LocalStorage'));
+app.factory('SessionStorage', WebStorage('SessionStorage'));
