@@ -1,4 +1,4 @@
-app.controller('MainCtrl', function($scope, $timeout, storages) {
+app.controller('MainCtrl', function($scope, $timeout, storages, Quota) {
   $scope.storages = storages;
 
   var error_callback = function() {
@@ -51,6 +51,10 @@ app.controller('MainCtrl', function($scope, $timeout, storages) {
     $scope.$broadcast('update');
   };
 
+  $scope.calc_quota = function() {
+    Quota.request_usage();
+  };
+
   $scope.set_working_storage = function(name) {
     for (var i = 0; i < $scope.storages.length; i++) {
       if ($scope.storages[i].name === name) {
@@ -65,6 +69,9 @@ app.directive('quotaTable', ['Quota', function(quota) {
     restrict: 'A',
     controller: function($scope, Quota) {
       $scope.source = Quota;
+      $scope.source.oncomplete = function() {
+        if (!$scope.$$phase) $scope.$apply();
+      };
       $scope.change_file_system = function() {
         $scope.source && $scope.source.change_file_system(function() {
           $scope.update();
@@ -121,6 +128,7 @@ app.directive('storageTable', [
 
       $scope.source.oncomplete = function() {
         $scope.time_finish();
+        $scope.calc_quota();
         if (!$scope.$$phase) $scope.$apply();
       };
 

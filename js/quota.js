@@ -43,6 +43,7 @@ app.factory('Quota', ['FileSystem', '$window', function(fs, $window) {
     this.storage_type = 'TEMPORARY';
     this.storage = null;
     this.supported = false;
+    this.oncomplete = null;
     if (!temporaryStorage || !persistentStorage) {
       console.error('Quota Management API not supported on this browser');
       return;
@@ -52,28 +53,28 @@ app.factory('Quota', ['FileSystem', '$window', function(fs, $window) {
     this.request_usage();
   };
   Quota.prototype = {
-    change_file_system: function(callback) {
+    change_file_system: function() {
       if (!this.supported) return;
       this.storage = this.storage_type === 'TEMPORARY' ? temporaryStorage : persistentStorage;
       fs.open(this.storage, this.quota);
-      this.request_usage(callback);
+      this.request_usage();
     },
     request_quota: function(callback) {
       if (!this.supported) return;
       this.storage.requestQuota(this.disp_quota * 1024 * 1024, (function(quota) {
         this.quota = quota;
         this.disp_quota = ~~(quota / 1024 / 1024);
-        if (typeof callback === 'function') callback();
+        this.change_file_system();
       }).bind(this), error);
     },
-    request_usage: function(callback) {
+    request_usage: function() {
       if (!this.supported) return;
       this.storage.queryUsageAndQuota((function(usage, quota) {
         this.quota = quota;
         this.usage = usage;
         this.disp_quota = ~~(quota / 1024 / 1024);
         this.disp_usage = ~~(usage / 1024 / 1024);
-        if (typeof callback === 'function') callback();
+        if (typeof this.oncomplete === 'function') this.oncomplete();
       }).bind(this), error);
     }
   };
