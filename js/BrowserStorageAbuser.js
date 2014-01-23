@@ -537,7 +537,7 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
     }
 
     try {
-      db = openDatabase(name, '', name, 10 * 1024 * 1024);
+      db = openDatabase(name, '', name, 1 * 1024 * 1024);
     } catch (e) {
       console.error(e.message);
       this.supported = false;
