@@ -107,18 +107,15 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
       console.info('WebSQL database not supported on this browser');
       return;
     }
-    this.supported  = true;
 
     try {
-      db = openDatabase(name, '', name, quota && quota.quota || 1 * 1024 * 1024);
+      db = openDatabase(name, '', name, 10 * 1024 * 1024);
     } catch (e) {
-      if (e == 2) {
-        alert('Invalid database version!');
-      } else {
-        alert('Unknown error '+e+'.');
-      }
+      console.error(e.message);
+      this.supported = false;
       return;
     }
+    this.supported  = true;
     if (db.version !== version) {
       db.changeVersion(db.version, version,
      (function onChangeVersionCallback(transaction) {
@@ -140,6 +137,7 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
       }).bind(this),
       (function onChangeVersionError(e) {
         console.error('WebSQL Error!', e);
+        this.supported = false;
         throw 'WebSQL Error!';
 
       }).bind(this),

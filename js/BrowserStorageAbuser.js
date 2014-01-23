@@ -1,4 +1,4 @@
-/*! BrowserStorageAbuser - v0.1.0 - 2014-01-22
+/*! BrowserStorageAbuser - v0.1.0 - 2014-01-23
 * Copyright (c) 2014 ; Licensed  */
 var app = angular.module('BrowserStorageAbuser', []);
 
@@ -40,14 +40,13 @@ app.factory('FileSystem', ['$window', function($window) {
                           $window.msRequestFileSystem ||
                           undefined;
 
-  var error = function(progressEvent) {
-    var error = progressEvent.target.error;
-    if (error.name === 'QuotaExceededError') {
+  var error = function(e) {
+    if (e.name === 'QuotaExceededError') {
       this.filled = true;
-      alert(error.message);
+      alert(e.message);
     }
     if (console) {
-      console.error(error.message);
+      console.error(e.message);
     }
 
     this.queue = [];
@@ -68,7 +67,10 @@ app.factory('FileSystem', ['$window', function($window) {
             this.getAll();
           }
         }).bind(this);
-        writer.onerror = error.bind(this);
+        writer.onerror = (function(e) {
+          // call error function with FileError object
+          error.bind(this)(e.target.error);
+        }).bind(this);
 
         // Write directly if entry is instance of Blob
         if (entry instanceof Blob) {
@@ -533,18 +535,15 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
       console.info('WebSQL database not supported on this browser');
       return;
     }
-    this.supported  = true;
 
     try {
-      db = openDatabase(name, '', name, quota && quota.quota || 1 * 1024 * 1024);
+      db = openDatabase(name, '', name, 10 * 1024 * 1024);
     } catch (e) {
-      if (e == 2) {
-        alert('Invalid database version!');
-      } else {
-        alert('Unknown error '+e+'.');
-      }
+      console.error(e.message);
+      this.supported = false;
       return;
     }
+    this.supported  = true;
     if (db.version !== version) {
       db.changeVersion(db.version, version,
      (function onChangeVersionCallback(transaction) {
@@ -566,6 +565,7 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
       }).bind(this),
       (function onChangeVersionError(e) {
         console.error('WebSQL Error!', e);
+        this.supported = false;
         throw 'WebSQL Error!';
 
       }).bind(this),
@@ -679,7 +679,8 @@ var WebStorage = function(storage_name) {
       try {
         storage.setItem(data.name, JSON.stringify(data));
       } catch(e) {
-        if (e.code === e.QUOTA_EXCEEDED_ERR || e.code === 1014) { // 1014 is unknown error code Firefox emits
+        if (e.name == 'QuotaExceededError' ||
+            e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
           this.filled = true;
         }
         this.queue = [];
