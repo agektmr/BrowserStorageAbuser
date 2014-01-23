@@ -1,4 +1,4 @@
-app.controller('MainCtrl', function($scope, $timeout, storages, Quota) {
+app.controller('MainCtrl', ['$scope', '$timeout', 'storages', 'Quota', function($scope, $timeout, storages, Quota) {
   $scope.storages = storages;
 
   var error_callback = function() {
@@ -62,7 +62,7 @@ app.controller('MainCtrl', function($scope, $timeout, storages, Quota) {
       }
     }
   };
-});
+}]);
 
 app.directive('quotaTable', ['Quota', function(quota) {
   return {
@@ -148,29 +148,17 @@ app.directive('storageTable', [
       };
     },
     link: function(scope, elem, attr) {
-      var Blob        = window.Blob ||
-                        window.WebKitBlob ||
-                        window.MozBlob ||
-                        window.MsBlob ||
-                        undefined;
-
-      var BlobBuilder = window.BlobBuilder ||
-                        window.WebKitBlobBuilder ||
-                        window.MozBlobBuilder ||
-                        window.MsBlobBuilder ||
-                        undefined;
-
       scope.hover = false;
       scope.total_size = '0.0MB';
       scope.file_input = elem.find('input')[0];
 
       // Why can't this be elem.find('input[type="file"]') ?
-      scope.file_input.onchange = function(e) {
-        Array.prototype.forEach.call(e.target.files, function(file) {
-          scope.time_lap();
-          scope.source.add(file);
-        });
-      };
+      // scope.file_input.onchange = function(e) {
+      //   Array.prototype.forEach.call(e.target.files, function(file) {
+      //     scope.time_lap();
+      //     scope.source.add(file);
+      //   });
+      // };
 
       scope.$watch('source.loading', function(loading) {
         if (!loading) {
@@ -226,6 +214,18 @@ app.directive('storageTable', [
 }]);
 
 app.directive('fillStorage', function() {
+  var Blob        = window.Blob ||
+                    window.WebKitBlob ||
+                    window.MozBlob ||
+                    window.MsBlob ||
+                    undefined;
+
+  var BlobBuilder = window.BlobBuilder ||
+                    window.WebKitBlobBuilder ||
+                    window.MozBlobBuilder ||
+                    window.MsBlobBuilder ||
+                    undefined;
+
   return {
     restrict: 'E',
     templateUrl: 'fill-storage.html',
@@ -260,7 +260,7 @@ app.directive('fillStorage', function() {
             }
           } else {
             blob = {
-              size:     chunk_size,
+              size:     $scope.chunk_size,
               payload:  content
             };
           }

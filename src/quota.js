@@ -45,7 +45,7 @@ app.factory('Quota', ['FileSystem', '$window', function(fs, $window) {
     this.supported = false;
     this.oncomplete = null;
     if (!temporaryStorage || !persistentStorage) {
-      console.error('Quota Management API not supported on this browser');
+      console.info('Quota Management API not supported on this browser');
       return;
     }
     this.supported = true;
@@ -56,8 +56,9 @@ app.factory('Quota', ['FileSystem', '$window', function(fs, $window) {
     change_file_system: function() {
       if (!this.supported) return;
       this.storage = this.storage_type === 'TEMPORARY' ? temporaryStorage : persistentStorage;
-      fs.open(this.storage, this.quota);
-      this.request_usage();
+      fs.open(this.storage_type, this.quota, (function() {
+        this.request_usage();
+      }).bind(this));
     },
     request_quota: function(callback) {
       if (!this.supported) return;

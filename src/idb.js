@@ -19,13 +19,13 @@ Author: Eiji Kitamura (agektmr@gmail.com)
 
 app.factory('IndexedDB', ['$window', function($window) {
   var error = function(e) {
-    if (e.code && e.code === e.QUOTA_EXCEEDED_ERR) {
+    if (e.name == 'QuotaExceededError') {
       this.filled = true;
-      alert('Quota Exceeded!');
+      alert(e.message);
     }
     if (console) {
-      console.error('IndexedDB Error!', e);
-      console.trace && console.trace();
+      console.info('IndexedDB Error!');
+      console.error(e.message);
     }
 
     this.queue = [];
@@ -47,7 +47,7 @@ app.factory('IndexedDB', ['$window', function($window) {
           payload: e.target.result
         };
         var transaction = db.transaction(['entries'], 'readwrite');
-        transaction.oncomplete = (function transactionOnComplete(e) {
+        transaction.oncomplete = (function onTransactionComplete(e) {
           if (this.queue.length > 0) {
             if (typeof this.onprogress === 'function') this.onprogress(++this.value, this.max);
             add.bind(this)();
@@ -57,17 +57,15 @@ app.factory('IndexedDB', ['$window', function($window) {
           }
         }).bind(this);
         transaction.onerror = error.bind(this);
-        transaction.onabort = (function transactionOnAboart(e) {
-          // e(Event).target(IDBTransaction).error(DOMError)
-          if (e.target.error && e.target.error.name === 'QuotaExceededError') {
-            this.filled = true;
-            alert('Quota Exceeded!');
-          }
-          error.bind(this)(e);
+        transaction.onabort = (function onTransactionAboart(e) {
+          error.bind(this)(e.target.error);
         }).bind(this);
 
         var store = transaction.objectStore('entries');
-        store.put(data);
+        var req = store.put(data);
+        req.onerror = function(e) {
+          console.log(e);
+        };
       }).bind(this);
 
       if (file.type === 'text/plain') {
@@ -97,7 +95,7 @@ app.factory('IndexedDB', ['$window', function($window) {
     this.table = [];
     this.total = 0;
     if (!$window.indexedDB) {
-      console.error('Indexed Database API not supported on this browser');
+      console.info('Indexed Database API not supported on this browser');
       return;
     }
 

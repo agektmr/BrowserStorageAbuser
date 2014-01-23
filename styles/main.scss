@@ -4,7 +4,7 @@
     width: 230px;
   }
   input[type="number"] {
-    width: 50px;
+    width: 70px;
   }
 }
 
@@ -20,6 +20,11 @@
   background-repeat: no-repeat;
   background-position: center;
   background-color: #999;
+}
+
+.row {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
 }
 
 .panel {

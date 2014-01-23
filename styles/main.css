@@ -2,7 +2,11 @@
 .quota meter {
   width: 230px; }
 .quota input[type="number"] {
-  width: 50px; }
+  width: 70px; }
+
+.row {
+  margin-right: 0 !important;
+  margin-left: 0 !important; }
 
 .panel {
   position: relative; }

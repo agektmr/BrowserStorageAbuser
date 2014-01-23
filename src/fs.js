@@ -25,13 +25,12 @@ app.factory('FileSystem', ['$window', function($window) {
                           undefined;
 
   var error = function(e) {
-    if (e.code === e.QUOTA_EXCEEDED_ERR) {
+    if (e.name === 'QuotaExceededError') {
       this.filled = true;
-      alert('Quota Exceeded!');
+      alert(e.message);
     }
     if (console) {
-      console.error('FileSystem Error!', e);
-      console.trace && console.trace();
+      console.error(e.message);
     }
 
     this.queue = [];
@@ -52,7 +51,10 @@ app.factory('FileSystem', ['$window', function($window) {
             this.getAll();
           }
         }).bind(this);
-        writer.onerror = error.bind(this);
+        writer.onerror = (function(e) {
+          // call error function with FileError object
+          error.bind(this)(e.target.error);
+        }).bind(this);
 
         // Write directly if entry is instance of Blob
         if (entry instanceof Blob) {
@@ -80,10 +82,12 @@ app.factory('FileSystem', ['$window', function($window) {
     this.table = [];
     this.total = 0;
     if (requestFileSystem) {
-      this.supported = true;
       this.open('TEMPORARY', 0, (function() {
         this.getAll();
       }).bind(this));
+    } else {
+      console.info('FileSystem API not supported on this browser');
+      return;
     }
   };
   fs.prototype = {
@@ -92,7 +96,11 @@ app.factory('FileSystem', ['$window', function($window) {
         this.supported = true;
         this.storage = fs;
         if (typeof callback === 'function') callback();
-      }).bind(this), error);
+      }).bind(this), function(e) {
+        this.supported = false;
+        console.error(e.message);
+        if (typeof callback === 'function') callback();
+      });
     },
     add: function(fileEntry) {
       if (!this.supported) return;
@@ -112,7 +120,8 @@ app.factory('FileSystem', ['$window', function($window) {
       this.loading = true;
       var reader = this.storage.root.createReader();
       reader.readEntries((function readerReadEntries(results) {
-        if (results.length > 0) {
+        var length = results.length;
+        if (length > 0) {
           var c = 0;
           Array.prototype.forEach.call(results, (function ArrayForEach(result) {
             if (result.isFile) {
@@ -120,13 +129,21 @@ app.factory('FileSystem', ['$window', function($window) {
                 file.date = file.lastModifiedDate;
                 size += file.size;
                 table.push(file);
-                if (++c === results.length) {
+                if (++c === length) {
                   this.table = table;
                   this.total = size;
                   this.loading = false;
                   if (typeof this.oncomplete === 'function') this.oncomplete();
                 }
               }).bind(this));
+            } else {
+              length--;
+              if (length === 0) {
+                this.table = table;
+                this.total = size;
+                this.loading = false;
+                if (typeof this.oncomplete === 'function') this.oncomplete();
+              }
             }
           }).bind(this));
         } else {
@@ -144,17 +161,25 @@ app.factory('FileSystem', ['$window', function($window) {
       this.loading = true;
       var reader = this.storage.root.createReader();
       reader.readEntries((function readerReadEntries(results) {
-        if (results.length > 0) {
+        var length = results.length;
+        if (length > 0) {
           var c = 0;
           Array.prototype.forEach.call(results, (function ArrayForEach(result) {
             if (result.isFile) {
               result.remove((function fileRemove() {
-                if (++c == results.length) {
+                if (++c == length) {
                   this.filled = false;
                   this.loading = false;
                   this.getAll();
                 }
               }).bind(this), error.bind(this));
+            } else {
+              length--;
+              if (length === 0) {
+                this.filled = false;
+                this.loading = false;
+                this.getAll();
+              }
             }
           }).bind(this));
         } else {

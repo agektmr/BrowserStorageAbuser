@@ -23,8 +23,8 @@ var WebStorage = function(storage_name) {
   var error = function(e) {
     alert(e.message);
     if (console) {
-      console.error(storage_name+' Error!', e);
-      console.trace && console.trace();
+      console.info(storage_name+' Error!');
+      console.error(e);
     }
   };
 
@@ -54,7 +54,8 @@ var WebStorage = function(storage_name) {
       try {
         storage.setItem(data.name, JSON.stringify(data));
       } catch(e) {
-        if (e.code === e.QUOTA_EXCEEDED_ERR || e.code === 1014) { // 1014 is unknown error code Firefox emits
+        if (e.name == 'QuotaExceededError' ||
+            e.name == 'NS_ERROR_DOM_QUOTA_REACHED') {
           this.filled = true;
         }
         this.queue = [];
@@ -107,7 +108,7 @@ var WebStorage = function(storage_name) {
       storage = window[storage_name_];
       this.getAll();
     } else {
-      console.error(storage_name+' not supported on this browser');
+      console.info(storage_name+' not supported on this browser');
       return;
     }
   };

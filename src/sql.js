@@ -21,11 +21,11 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
   var error = function(e) {
     if (e.code === e.QUOTA_ERR) {
       this.filled = true;
-      alert('Quota Exceeded!');
+      alert(e.message);
     }
     if (console) {
-      console.error('WebSQL Error!', e);
-      console.trace && console.trace();
+      console.info('WebSQL Error!');
+      console.error(e.message);
     }
 
     this.queue = [];
@@ -34,6 +34,7 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
   };
 
   var version = '1.0',
+      name = 'BrowserStorageAbuser',
       db = null;
 
   var add = function() {
@@ -46,9 +47,9 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
           file.lastModifiedDate.getTime(),
           e.target.result
         ];
-        db.transaction((function transactionOnCallback(transaction) {
+        db.transaction((function onTransactionCallback(transaction) {
           transaction.executeSql('INSERT INTO entries (name, size, date, payload) VALUES(?, ?, ?, ?)', data,
-          (function executeSqlOnCallback(t, results) {
+          (function onExecuteSqlCallback(t, results) {
             if (this.queue.length > 0) {
               if (typeof this.onprogress === 'function') this.onprogress(++this.value, this.max);
               add.bind(this)();
@@ -56,11 +57,24 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
               this.loading = false;
               this.getAll();
             }
-          }).bind(this), (function(t, e) {
+          }).bind(this),
+          (function onExecuteSqlError(t, e) {
             error.bind(this)(e);
+            // Returning true to rollback. false to continue;
+            return false;
           }).bind(this));
         }).bind(this),
-        error.bind(this));
+        (function onTransactionError(e) {
+          // If Quota Error, error caughts here.
+          // At this point, user might have given either permission or not.
+          // There's no good way to check if permission was given or not.
+          if (e.code === e.QUOTA_ERR) {
+            error.bind(this)(e);
+          }
+        }).bind(this),
+        (function onTransactionSuccess() {
+          console.log('Transaction successful.');
+        }).bind(this));
       }).bind(this);
 
       if (file.type === 'text/plain') {
@@ -90,14 +104,24 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
     this.table = [];
     this.total = 0;
     if (!$window.openDatabase) {
-      console.error('WebSQL database not supported on this browser');
+      console.info('WebSQL database not supported on this browser');
       return;
     }
     this.supported  = true;
 
-    db = openDatabase('BrowserStorageAbuser', '', 'BrowserStorageAbuser', quota && quota.quota || 1 * 1024 * 1024);
+    try {
+      db = openDatabase(name, '', name, quota && quota.quota || 1 * 1024 * 1024);
+    } catch (e) {
+      if (e == 2) {
+        alert('Invalid database version!');
+      } else {
+        alert('Unknown error '+e+'.');
+      }
+      return;
+    }
     if (db.version !== version) {
-      db.changeVersion(db.version, version, (function changeVersionOnCallback(transaction) {
+      db.changeVersion(db.version, version,
+     (function onChangeVersionCallback(transaction) {
         // transaction.executeSql('DROP TABLE entries');
         transaction.executeSql('CREATE TABLE entries ('+
           'id          INTEGER PRIMARY KEY AUTOINCREMENT, '+
@@ -105,19 +129,21 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
           'size        INTEGER, '+
           'date        INTEGER, '+
           'payload     TEXT)', [],
-        (function executeSqlOnCallback(t) {
+        (function onExecuteSqlCallback(t) {
           this.getAll();
           console.info('Created new table on WebSQL');
         }).bind(this),
-        (function executeSqlOnError(t, e) {
+        (function onExecuteSqlError(t, e) {
           error.bind(this)(e);
         }).bind(this));
 
-      }).bind(this), (function changeVersionOnError(e) {
+      }).bind(this),
+      (function onChangeVersionError(e) {
         console.error('WebSQL Error!', e);
         throw 'WebSQL Error!';
 
-      }).bind(this), (function changeVersionOnSuccess() {
+      }).bind(this),
+      (function onChangeVersionSuccess() {
         this.getAll();
         console.info('upgraded WebSQL');
 
@@ -142,9 +168,10 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
       if (!this.supported || this.loading) return;
       var size = 0;
       this.loading = true;
-      db.readTransaction((function readTransactionOnCallback(transaction) {
+      db.readTransaction(
+      (function onReadTransactionCallback(transaction) {
         transaction.executeSql('SELECT * FROM entries', [],
-            (function executeSqlOnCallback(t, results) {
+        (function onExecuteSqlCallback(t, results) {
           var table = [];
           for (var i = 0; i < results.rows.length; i++) {
             var data = {
@@ -160,7 +187,7 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
           this.loading = false;
           if (typeof this.oncomplete === 'function') this.oncomplete();
         }).bind(this),
-        (function executeSqlOnError(t, e) {
+        (function onExecuteSqlError(t, e) {
           // SQLError
           error.bind(this)(e);
         }).bind(this));
@@ -171,14 +198,14 @@ app.factory('WebSQL', ['Quota', '$window', function(quota, $window) {
       if (!this.supported || this.loading) return;
       this.table = [];
       this.loading = true;
-      db.transaction((function transactionOnCallback(transaction) {
+      db.transaction((function onTransactionCallback(transaction) {
         transaction.executeSql('DELETE FROM entries', [],
-            (function executeSqlOnCallback(t, results) {
+        (function onExecuteSqlCallback(t, results) {
           this.filled = false;
           this.loading = false;
           this.getAll();
         }).bind(this),
-        (function executeSqlOnError(t, e) {
+        (function onExecuteSqlError(t, e) {
           error.bind(this)(e);
         }).bind(this));
       }).bind(this),

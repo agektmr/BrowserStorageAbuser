@@ -9,9 +9,10 @@
     <title>Browser Storage Abuser</title>
     <meta name="description" content=""/>
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <link rel="stylesheet" href="lib/css/bootstrap/bootstrap.min.css"/>
-    <link rel="stylesheet" href="lib/css/bootstrap/bootstrap-theme.min.css"/>
+    <!-- build:css styles/style.css -->
+    <link rel="stylesheet" href="styles/united.css"/>
     <link rel="stylesheet" href="styles/main.css"/>
+    <!-- /build -->
     <script type="text/ng-template" id="storage-table.html">
       <div class="panel panel-default" ng-class="{hover:hover, loading:source.loading, unsupported:!source.supported}">
         <div class="panel-heading row">
@@ -30,8 +31,8 @@
           </details>
           <div class="info right">
             <div class="btn-group btn-group right">
-              <input type="file" multiple>
-              <button class="btn btn-default" ng-click="upload()">Upload File</button>
+              <!--input type="file" multiple-->
+              <!--button class="btn btn-default" ng-click="upload()">Upload File</button-->
               <button class="btn btn-warning" ng-click="open_fill_storage()">Fill Storage</button>
               <button class="btn btn-danger" ng-click="delete_all()">Delete All</button>
             </div>
@@ -137,12 +138,13 @@
       <div class="page-header">
         <br>
         <br>
-        <p>Have you ever wondered how much storage you can use on browsers? This tool is for you to abuse and experiment with limit of your favorite storage!</p>
+        <p>Have you ever wondered how large is your browser storage? This tool is for you to abuse and experiment limit of your browser's storage!</p>
         <ul>
           <li>Drag and drop files and folders onto your favorite storage.</li>
           <li>&quot;Upload&quot; files by selection.</li>
           <li>&quot;Fill Storage&quot; with blobs with arbitrary size.</li>
         </ul>
+        <p>If you see &quot;Quota Exceeded&quot; error, that is the upper limit.</p>
       </div>
       <div class="panel panel-default" ng-class="{unsupported: !source.supported}" quota-table>
         <div class="panel-heading row">
@@ -152,7 +154,8 @@
           <details>
             <summary>What is Quota Management API?</summary>
             <ul>
-              <li>Quota Management API is...</li>
+              <li>Quota Management API handles quota for AppCache, IndexedDB, WebSQL and File System API. It provides two different storage: Temporary Storage and Persistent Storage. They are technically separate storage where Temporary Storage stores up to 10% of remaining disk size, Persistent Storage stores arbitrary size designed by a developer.</li>
+              <li><a href="http://updates.html5rocks.com/2011/11/Quota-Management-API-Fast-Facts" target="_blank">Read more</a></li>
             </ul>
           </details>
           <div class="form-group info row">
@@ -181,26 +184,16 @@
       </footer>
     </div>
 
-    <script src="lib/js/jquery/jquery.min.js"></script>
-    <script src="lib/js/angular/angular.js"></script>
-    <script src="lib/js/bootstrap/modal.js"></script>
+    <script src="lib/js/jquery/jquery.min.js" defer></script>
+    <script src="lib/js/angular/angular.min.js" defer></script>
+    <script src="lib/js/bootstrap/modal.js" defer></script>
+    <script src="js/BrowserStorageAbuser.js" defer></script>
 
-    <!-- build:js scripts/scripts.js -->
-    <script src="js/app.js"></script>
-    <script src="js/fs.js"></script>
-    <script src="js/quota.js"></script>
-    <script src="js/idb.js"></script>
-    <script src="js/sql.js"></script>
-    <script src="js/ws.js"></script>
-    <script src="js/main.js"></script>
-    <!-- endbuild -->
-
-    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
     <script>
-      // var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
-      // (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-      // g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-      // s.parentNode.insertBefore(g,s)}(document,'script'));
+      var _gaq=[['_setAccount','UA-31105737-1'],['_trackPageview']];
+      (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+      g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+      g.async=true;s.parentNode.insertBefore(g,s)}(document,'script'));
     </script>
   </body>
 </html>
