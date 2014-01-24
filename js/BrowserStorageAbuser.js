@@ -1,4 +1,4 @@
-/*! BrowserStorageAbuser - v0.1.0 - 2014-01-23
+/*! BrowserStorageAbuser - v0.1.0 - 2014-01-24
 * Copyright (c) 2014 ; Licensed  */
 var app = angular.module('BrowserStorageAbuser', []);
 
@@ -963,12 +963,12 @@ app.directive('storageTable', [
       scope.file_input = elem.find('input')[0];
 
       // Why can't this be elem.find('input[type="file"]') ?
-      // scope.file_input.onchange = function(e) {
-      //   Array.prototype.forEach.call(e.target.files, function(file) {
-      //     scope.time_lap();
-      //     scope.source.add(file);
-      //   });
-      // };
+      scope.file_input.onchange = function(e) {
+        Array.prototype.forEach.call(e.target.files, function(file) {
+          scope.time_lap();
+          scope.source.add(file);
+        });
+      };
 
       scope.$watch('source.loading', function(loading) {
         if (!loading) {
