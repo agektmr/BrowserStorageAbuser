@@ -236,8 +236,7 @@ app.directive('fillStorage', function() {
         1024 * 5 * 100,         // 500KB
         1024 * 1024 * 5,        // 5MB
         1024 * 1024 * 5 * 10,   // 50MB
-        1024 * 1024 * 5 * 100,  // 500MB
-        1024 * 1024 * 1024      // 5GB
+        1024 * 1024 * 5 * 100   // 500MB
       ];
       $scope.chunk_size = 1024 * 1024 * 5;
       $scope.quantity = 1;
