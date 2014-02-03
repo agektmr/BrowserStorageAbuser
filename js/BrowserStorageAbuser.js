@@ -1,4 +1,4 @@
-/*! BrowserStorageAbuser - v0.1.0 - 2014-01-28
+/*! BrowserStorageAbuser - v0.1.0 - 2014-02-03
 * Copyright (c) 2014 ; Licensed  */
 var app = angular.module('BrowserStorageAbuser', []);
 
@@ -221,10 +221,12 @@ app.factory('Quota', ['FileSystem', '$window', function(fs, $window) {
                           $window.navigator.mozPersistentStorage ||
                           $window.navigator.msPersistentStorage ||
                           undefined;
+  var storageQuota      = $window.navigator.storageQuota ||
+                          undefined;
 
   var error = function(e) {
-    alert('Error!', e);
-    console.error('Quota Management Error', e);
+    alert('Error! '+e.message);
+    console.error('Quota Management Error:', e.message);
     console.trace();
   };
 
@@ -254,22 +256,48 @@ app.factory('Quota', ['FileSystem', '$window', function(fs, $window) {
       }).bind(this));
     },
     request_quota: function(callback) {
-      if (!this.supported) return;
-      this.storage.requestQuota(this.disp_quota * 1024 * 1024, (function(quota) {
-        this.quota = quota;
-        this.disp_quota = ~~(quota / 1024 / 1024);
-        this.change_file_system();
-      }).bind(this), error);
+      if (!this.supported || this.storage_type != 'PERSISTENT') return;
+      if (storageQuota) {
+        // The new Quota Management API
+        storageQuota.requestPersistentQuota(this.disp_quota * 1024 * 1024).then(
+        (function(storageInfo) {
+          this.quota = storageInfo.quota;
+          this.usage = storageInfo.usage;
+          this.disp_quota = ~~(storageInfo.quota / 1024 / 1024);
+          this.disp_usage = ~~(storageInfo.usage / 1024 / 1024);
+          this.change_file_system();
+        }).bind(this), error);
+      } else {
+        this.storage.requestQuota(this.disp_quota * 1024 * 1024,
+        (function(quota) {
+          this.quota = quota;
+          this.disp_quota = ~~(quota / 1024 / 1024);
+          this.change_file_system();
+        }).bind(this), error);
+      }
     },
     request_usage: function() {
       if (!this.supported) return;
-      this.storage.queryUsageAndQuota((function(usage, quota) {
-        this.quota = quota;
-        this.usage = usage;
-        this.disp_quota = ~~(quota / 1024 / 1024);
-        this.disp_usage = ~~(usage / 1024 / 1024);
-        if (typeof this.oncomplete === 'function') this.oncomplete();
-      }).bind(this), error);
+      if (storageQuota) {
+        // The new Quota Management API
+        storageQuota.queryInfo(this.storage_type.toLowerCase()).then(
+        (function(storageInfo) {
+          this.quota = storageInfo.quota;
+          this.usage = storageInfo.usage;
+          this.disp_quota = ~~(storageInfo.quota / 1024 / 1024);
+          this.disp_usage = ~~(storageInfo.usage / 1024 / 1024);
+          if (typeof this.oncomplete === 'function') this.oncomplete();
+        }).bind(this), error);
+      } else {
+        this.storage.queryUsageAndQuota(
+        (function(usage, quota) {
+          this.quota = quota;
+          this.usage = usage;
+          this.disp_quota = ~~(quota / 1024 / 1024);
+          this.disp_usage = ~~(usage / 1024 / 1024);
+          if (typeof this.oncomplete === 'function') this.oncomplete();
+        }).bind(this), error);
+      }
     }
   };
   return new Quota();
