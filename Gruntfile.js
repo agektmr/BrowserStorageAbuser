@@ -52,22 +52,30 @@ module.exports = function(grunt) {
         dest: 'js/<%= pkg.name %>.min.js'
       }
     },
+    connect: {
+      site: {
+      }
+    },
     watch: {
       files: [
-        'Gruntfile.js',
-        'src/*.js'
+        'src/*.js',
+        'index.html'
       ],
-      tasks: ['concat']
+      tasks: ['concat', 'uglify'],
+      options: {
+        livereload: true
+      }
     }
   });
 
   // These plugins provide necessary tasks.
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-bower-task');
 
   // Default task.
-  grunt.registerTask('default', ['concat', 'uglify']);
+  grunt.registerTask('default', ['connect', 'watch']);
   grunt.registerTask('install', ['bower']);
 };
