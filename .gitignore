@@ -4,3 +4,6 @@ bower_components
 lib/*
 \.DS_Store
 *\.sublime*
+/nbproject/private/
+img/tests
+nbproject
